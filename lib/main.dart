@@ -14,6 +14,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   StreamSubscription _intentDataStreamSubscription;
+  TextEditingController _portController = new TextEditingController();
   TextEditingController _serverController = new TextEditingController();
   TextEditingController _sharedController = new TextEditingController();
   String errorText = "";
@@ -26,6 +27,8 @@ class _MyAppState extends State<MyApp> {
       String s = prefs.getString("server_url");
       print("updating button: $s");
       _serverController.text = s;
+      s = prefs.getString("port");
+      _portController.text = s;
     }();
 
     // For sharing or opening urls/text coming from outside the app while the app is in the memory
@@ -54,17 +57,35 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  void onPortSubmit(String s) async {
+    s = s.trim();
+    final SharedPreferences prefs = await _prefs;
+    if (await prefs.setString("port", s)) {
+      setError("");
+    } else {
+      setError("Cannot set port value");
+    }
+  }
+
   void onTextBoxSubmit(String s) async {
-      final SharedPreferences prefs = await _prefs;
-      if (await prefs.setString("server_url", s)) {
-        setError("");
-      } else {
-        setError("Cannot set server value");
-      }
+    s = s.trim();
+    final SharedPreferences prefs = await _prefs;
+    if (await prefs.setString("server_url", s)) {
+      setError("");
+    } else {
+      setError("Cannot set server value");
+    }
   }
 
   void sendReqButton() async {
-    http.Response resp = await http.post(_serverController.text);
+    Uri a = Uri(
+      scheme:"http",
+      host: _serverController.text.trim(),
+      port: int.parse(_portController.text.trim()),
+      queryParameters: {"url": _sharedController.text.trim()}
+    );
+    print("URL = ${a.toString()}");
+    http.Response resp = await http.post(a.toString());
     int code = resp.statusCode;
     if (code == 200) {
       setError("");
@@ -94,12 +115,28 @@ class _MyAppState extends State<MyApp> {
             child: Column(
               children: <Widget>[
                 SizedBox(height: 50),
-                TextField(
-                  controller: _serverController,
-                  onSubmitted:  onTextBoxSubmit,
-                  decoration: InputDecoration(
-                    labelText: "Server",
-                  ),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextField (
+                        controller: _serverController,
+                        onSubmitted: onTextBoxSubmit,
+                        decoration: InputDecoration(
+                          labelText: "Server url",
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField (
+                        controller: _portController,
+                        onSubmitted: onPortSubmit,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: "port",
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 50),
                 TextField(
