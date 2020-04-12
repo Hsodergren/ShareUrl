@@ -85,12 +85,16 @@ class _MyAppState extends State<MyApp> {
       queryParameters: {"url": _sharedController.text.trim()}
     );
     print("URL = ${a.toString()}");
-    http.Response resp = await http.post(a.toString());
-    int code = resp.statusCode;
-    if (code == 200) {
-      setError("");
-    } else {
-      setError ("Error while sending request: $code");
+    try {
+      http.Response resp = await http.post(a.toString());
+      int code = resp.statusCode;
+      if (code == 200) {
+        setError("");
+      } else {
+        setError ("Error while sending request: $code");
+      }
+    } catch (e) {
+      setError(e.toString());
     }
   }
 
@@ -110,7 +114,7 @@ class _MyAppState extends State<MyApp> {
           title: const Text('ShareUrl'),
         ),
         body: Container(
-          margin: EdgeInsets.symmetric(horizontal: 50),
+          margin: EdgeInsets.symmetric(horizontal: 30),
           child: Center(
             child: Column(
               children: <Widget>[
@@ -118,6 +122,7 @@ class _MyAppState extends State<MyApp> {
                 Row(
                   children: <Widget>[
                     Expanded(
+                      flex: 70,
                       child: TextField (
                         controller: _serverController,
                         onSubmitted: onTextBoxSubmit,
@@ -126,7 +131,9 @@ class _MyAppState extends State<MyApp> {
                         ),
                       ),
                     ),
+                    SizedBox(width: 5),
                     Expanded(
+                      flex: 30,
                       child: TextField (
                         controller: _portController,
                         onSubmitted: onPortSubmit,
